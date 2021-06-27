@@ -1,0 +1,14 @@
+{
+  "name": "Realistic Mod",
+  "author": "LPD - Minecraft",
+  "description": "In this Mod, all will be change to realistic.",
+  "version": "1.3.0",
+  "license": "GNU AGPLv3",
+  "icon": "icon.png",
+  "banner": "banner.jpg",
+  "gameVersion": "1.0",
+  "requiredByAllPlayers": false,
+  "updateUrl": "https://raftmodding.com/api/v1/mods/realistic-mod/version.txt",
+  "isModPermanent": false,
+  "excludedFiles": []
+}
