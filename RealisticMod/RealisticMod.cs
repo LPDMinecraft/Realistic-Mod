@@ -23,10 +23,10 @@ public class RealisticMod : Mod
         // Recipe Manager
         recipeManager = new RecipeManager();
 
-        // Spawner Manager
+        // Spawner Manager (in Arbeit)
         moreSpawnManager = new MoreSpawnManager(0.50f, 1.00f, 0.30f, 0.80f);
 
-        // Draw Manager
+        // Draw Manager (in Arbeit)
         drawManager = new DrawManager();
 
         // Engines Drawer
@@ -34,9 +34,9 @@ public class RealisticMod : Mod
         double raftEngines = Math.Ceiling(RaftWeightManager.FoundationWeight / 100f);
         drawManager.drawText(new Vector2(100, 100), raftBounds + " Platforms(" + raftEngines + " Engines needed)");
 
-        // Warnanzeige wenn der Hei angreift
+        // Warnanzeige wenn der Hei angreift (in Arbeit)
 
-        // 10x Wood
+        // 10x Wood (in Arbeit)
 
         // Loaded
         Debug.Log("Mod RealisticMod has been loaded!");
