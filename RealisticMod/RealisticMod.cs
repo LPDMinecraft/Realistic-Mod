@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using UnityEngine.AzureSky;
 using Steamworks;
+using System.Collections;
 
 public class RealisticMod : Mod
 {
@@ -15,24 +16,50 @@ public class RealisticMod : Mod
     private static MoreSpawnManager moreSpawnManager;
     private static DrawManager drawManager;
 
+    Harmony harmony;
+    static ModData otherMod = null;
+    public static void StartModCheck(ModData md)
+    {
+        modInstance.StartCoroutine(WaitForModLoad(md));
+    }
+
+    static IEnumerator WaitForModLoad(ModData md)
+    {
+        while (md.modinfo == null)
+            yield return new WaitForEndOfFrame();
+        while (md.modinfo.modState == ModInfo.ModStateEnum.compiling || md.modinfo.modState == ModInfo.ModStateEnum.idle)
+            yield return new WaitForEndOfFrame();
+        if (md.modinfo.modState != ModInfo.ModStateEnum.running)
+            yield break;
+        while (md.modinfo.mainClass == null)
+            yield return new WaitForEndOfFrame();
+        var t = md.modinfo.mainClass.GetType();
+        if (t.Name != "MoreTrashRedux")
+            yield break;
+        otherMod = md;
+        yield break;
+    }
+
+    public static void EndModCheck(ModData md)
+    {
+        if (md == otherMod)
+            otherMod = null;
+    }
 
     public void Start()
     {
         Debug.Log("Mod RealisticMod will load.");
+        foreach (ModData mod in HMLLibrary.ModManagerPage.modList)
+            StartModCheck(mod);
+        harmony = new Harmony("de.lpd.RealisticMod");
+        harmony.PatchAll();
 
         // Recipe Manager
         recipeManager = new RecipeManager();
 
         // Spawner Manager (in Arbeit)
         moreSpawnManager = new MoreSpawnManager(0.50f, 1.00f, 0.30f, 0.80f);
-
-        // Draw Manager (in Arbeit)
-        drawManager = new DrawManager();
-
-        // Engines Drawer
-        double raftBounds = Traverse.Create<BlockCreator>().Field("raftBounds").GetValue<RaftBounds>().FoundationCount;
-        double raftEngines = Math.Ceiling(RaftWeightManager.FoundationWeight / 100f);
-        drawManager.drawText(new Vector2(100, 100), raftBounds + " Platforms(" + raftEngines + " Engines needed)");
+        ChangeSpawnRate(0.02f);
 
         // Warnanzeige wenn der Hei angreift (in Arbeit)
 
@@ -40,22 +67,35 @@ public class RealisticMod : Mod
 
         // Loaded
         Debug.Log("Mod RealisticMod has been loaded!");
-
-        while(false)
-        {
-            double raftBounds = Traverse.Create<BlockCreator>().Field("raftBounds").GetValue<RaftBounds>().FoundationCount;
-            double raftEngines = Math.Ceiling(RaftWeightManager.FoundationWeight / 100f);
-            if(raftBounds != null && raftEngines != null)
-            {
-                Debug.Log(raftBounds + " Engines: " + raftEngines);
-            }
-        }
     }
 
     public void OnModUnload()
     {
         Debug.Log("Mod RealisticMod has been unloaded!");
     }
+
+    static void ChangeSpawnRate(float multiplier)
+    {
+        if (otherMod == null)
+            return;
+        var access = Traverse.Create(otherMod.modinfo.mainClass);
+        access.Field("WorldCheck").SetValue(true);
+        access.Field("WorldDelay").SetValue(multiplier);
+        access.Method("RemodifyAll").GetValue();
+    }
+}
+
+[HarmonyPatch(typeof(HMLLibrary.BaseModHandler))]
+public class Patch_ModLoader
+{
+    [HarmonyPatch("LoadMod")]
+    [HarmonyPostfix]
+    static void LoadMod(ModData moddata) => RealisticMod.StartModCheck(moddata);
+
+
+    [HarmonyPatch("UnloadMod")]
+    [HarmonyPostfix]
+    static void UnloadMod(ModData moddata) => RealisticMod.EndModCheck(moddata);
 }
 
 public class RecipeManager
@@ -134,7 +174,15 @@ public class RecipeManager
         RecipeManager.SetRecipe(ItemManager.GetItemByName("Plastic"), new CostMultiple[] {
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Rope") }, 4),
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Thatch") }, 2),
-        }, CraftingCategory.Resources, 4, true);
+        }, CraftingCategory.Resources, 8, true);
+        RecipeManager.SetRecipe(ItemManager.GetItemByName("Thatch"), new CostMultiple[] {
+            new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Rope") }, 1),
+            new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Plank") }, 2),
+        }, CraftingCategory.Resources, 6, true);
+        RecipeManager.SetRecipe(ItemManager.GetItemByName("Scrap"), new CostMultiple[] {
+            new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Placeable_Lantern_Basic") }, 1),
+            new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Plank") }, 1),
+        }, CraftingCategory.Resources, 6, true);
     }
 
     public static void SetRecipe(Item_Base item, CostMultiple[] cost, CraftingCategory category = CraftingCategory.Resources, int amountToCraft = 1, bool learnedFromBeginning = false)
@@ -176,18 +224,7 @@ public class MoreSpawnManager
 
     public MoreSpawnManager(float min_all, float max_all, float min_wood, float max_food)
     {
-        /*spawner = FindObjectOfType<ObjectSpawnerManager>();
-        Debug.Log(spawner);
-        itemSpawnerSettings = (ObjectSpawnerAssetSettings)Traverse.Create(spawner.itemSpawner).Field("currentSettings").GetValue();
-        Debug.Log(itemSpawnerSettings);
-        plankSpawnerSettings = (ObjectSpawnerAssetSettings)Traverse.Create(spawner.itemSpawner).Field("currentSettings").GetValue();
-        Debug.Log(plankSpawnerSettings);*/
 
-        Interval_Float spawnRate = new Interval_Float(min_all, max_all);
-        Interval_Float spawnRateWood = new Interval_Float(min_wood, max_food);
-
-        /*plankSpawnerSettings.spawnRateInterval = spawnRateWood;
-        itemSpawnerSettings.spawnRateInterval = spawnRate;*/
     }
 
 }
@@ -201,4 +238,3 @@ public class DrawManager {
     }
 
 }
-
