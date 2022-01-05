@@ -1,5 +1,5 @@
 {
-  "name": "Realistic Mod",
+  "name": "RealisticMod",
   "author": "LPD - Minecraft",
   "description": "In this Mod, all will be change to realistic.",
   "version": "1.4",
@@ -9,6 +9,6 @@
   "gameVersion": "1.0",
   "requiredByAllPlayers": false,
   "updateUrl": "https://raftmodding.com/api/v1/mods/realistic-mod/version.txt",
-  "isModPermanent": true,
+  "isModPermanent": false,
   "excludedFiles": []
 }
