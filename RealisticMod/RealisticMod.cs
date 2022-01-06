@@ -16,10 +16,15 @@ public class RealisticMod : Mod
     private RaftCounter counter;
     private ListenerManager listenerManager;
     private CommandManager commandManager;
+    public static int size;
 
     public void Start()
     {
         Debug.Log("Mod RealisticMod will load.");
+
+        // Edit maxmium capaticy in item net to 50
+        ChangeValue(50);
+        log("Edited the maxmium capicity of itemnets to 50");
 
         // Recipe Manager
         recipeManager = new RecipeManager();
@@ -28,6 +33,7 @@ public class RealisticMod : Mod
         // Listener Manager
         listenerManager = new ListenerManager();
         listenerManager.addListener(new DropTreeModifierListener("de.lpd.lcraft.realistic.mod.listeners.blocks.drop.tree"));
+        listenerManager.addListener(new OnTriggerEnterPatch("de.lpd.lcraft.realistic.mod.listeners.blocks.itemnet.size"));
         listenerManager.registerListeners();
 
         // Command Manager
@@ -45,6 +51,12 @@ public class RealisticMod : Mod
     public void OnModUnload()
     {
         Debug.Log("Mod RealisticMod has been unloaded!");
+    }
+
+    public void ChangeValue(int result)
+    {
+        Traverse.Create(FindObjectOfType<ItemCollector>()).Field("maxNumberOfItems").SetValue(result);
+        size = result;
     }
 
     public void log(String c)
@@ -188,6 +200,28 @@ public class DropTreeModifierListener : Listener
             amount = (int)Mathf.Round(amount * 5);
         }
     }
+}
+
+[HarmonyPatch(typeof(ItemCollector))]
+[HarmonyPatch("OnTriggerEnter")]
+public class OnTriggerEnterPatch : Listener
+{
+    public OnTriggerEnterPatch(string id) : base(id)
+    {
+    }
+
+    public static void Prefix(ItemCollector __instance)
+    {
+        //On Item Picked up, it checks the value stored in the static script of how many the max should be and it sets the private variable to that
+        //On Unload it calls a custom method on all of them to reset them.
+        int value = (int)Traverse.Create(__instance).Field("maxNumberOfItems").GetValue();
+        if (value != RealisticMod.size)
+        {
+            Traverse.Create(__instance).Field("maxNumberOfItems").SetValue(RealisticMod.size);
+        }
+    }
+
+    
 }
 
 public class HealCommand : Command
