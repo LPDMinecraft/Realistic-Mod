@@ -1,45 +1,31 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
 using HarmonyLib;
 using System.Collections.Generic;
 using System;
-using System.IO;
-using System.Linq;
-using UnityEngine.AzureSky;
-using Steamworks;
-using System.Collections;
 
 public class RealisticMod : Mod
 {
 
     private RecipeManager recipeManager;
     private RaftCounter counter;
-    private ListenerManager listenerManager;
-    private CommandManager commandManager;
-    public static int size;
+    private Harmony harmony;
+    public static int ItemCollectorSize;
 
     public void Start()
     {
         Debug.Log("Mod RealisticMod will load.");
 
         // Edit maxmium capaticy in item net to 50
-        ChangeValue(50);
+        ChangeValue(20);
         log("Edited the maxmium capicity of itemnets to 50");
+
+        // Listener and Command Manager
+        harmony = new Harmony("de.lcraft.raft.realisticmod.listeners");
+        harmony.PatchAll();
 
         // Recipe Manager
         recipeManager = new RecipeManager();
         recipeManager.registerAllRecipes(this);
-
-        // Listener Manager
-        listenerManager = new ListenerManager();
-        listenerManager.addListener(new DropTreeModifierListener("de.lpd.lcraft.realistic.mod.listeners.blocks.drop.tree"));
-        listenerManager.addListener(new OnTriggerEnterPatch("de.lpd.lcraft.realistic.mod.listeners.blocks.itemnet.size"));
-        listenerManager.registerListeners();
-
-        // Command Manager
-        commandManager = new CommandManager();
-        commandManager.addCommand(new HealCommand("de.lpd.lcraft.realistic.mod.commands.heal"));
-        commandManager.registerCommands();
 
         // Raft Counter
         counter = new RaftCounter();
@@ -50,13 +36,14 @@ public class RealisticMod : Mod
 
     public void OnModUnload()
     {
+        harmony.UnpatchAll();
         Debug.Log("Mod RealisticMod has been unloaded!");
     }
 
     public void ChangeValue(int result)
     {
         Traverse.Create(FindObjectOfType<ItemCollector>()).Field("maxNumberOfItems").SetValue(result);
-        size = result;
+        ItemCollectorSize = result;
     }
 
     public void log(String c)
@@ -66,187 +53,37 @@ public class RealisticMod : Mod
 
 }
 
-public class ListenerManager
-{
-    private ArrayList allListener;
-
-    public ListenerManager()
-    {
-        allListener = new ArrayList();
-    }
-
-    public void addListener(Listener listener)
-    {
-        if(!existsListener(listener.getID()))
-        {
-            allListener.Add(listener);
-        }
-    }
-    public void registerListeners()
-    {
-        foreach (Listener c in allListener)
-        {
-            c.getHarmony().PatchAll();
-        }
-    }
-    public bool existsListener(String id)
-    {
-        foreach(Listener c in allListener)
-        {
-            if(c.getID().Equals(id))
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-}
-public abstract class Listener
-{
-    private Harmony harmony;
-    private String id;
-
-    public Listener(string id)
-    {
-        this.id = id;
-        harmony = new Harmony(this.id);
-    }
-
-    public String getID()
-    {
-        return id;
-    }
-
-    public Harmony getHarmony()
-    {
-        return harmony;
-    }
-
-}
-
-
-public class CommandManager
-{
-    private ArrayList allCommand;
-
-    public CommandManager()
-    {
-        allCommand = new ArrayList();
-    }
-
-    public void addCommand(Command listener)
-    {
-        if (!existsCommand(listener.getID()))
-        {
-            allCommand.Add(listener);
-        }
-    }
-    public void registerCommands()
-    {
-        foreach (Command c in allCommand)
-        {
-            c.getHarmony().PatchAll();
-        }
-    }
-    public bool existsCommand(String id)
-    {
-        foreach (Command c in allCommand)
-        {
-            if (c.getID().Equals(id))
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-}
-public abstract class Command
-{
-    private Harmony harmony;
-    private String id;
-
-    public Command(string id)
-    {
-        this.id = id;
-        harmony = new Harmony(this.id);
-    }
-
-    public String getID()
-    {
-        return id;
-    }
-
-    public Harmony getHarmony()
-    {
-        return harmony;
-    }
-
-}
-
 
 [HarmonyPatch(typeof(Inventory), "AddItem", new Type[] { typeof(string), typeof(int) })]
-public class DropTreeModifierListener : Listener
+public class DropTreeModifierListener
 {
-    public DropTreeModifierListener(string id) : base(id)
-    {
-    }
 
     static void Prefix(ref string uniqueItemName, ref int amount)
     {
         if (Environment.StackTrace.Contains("at HarvestableTree"))
         {
-            amount = (int)Mathf.Round(amount * 5);
+            amount = (int)amount * 2;
         }
     }
 }
 
 [HarmonyPatch(typeof(ItemCollector))]
 [HarmonyPatch("OnTriggerEnter")]
-public class OnTriggerEnterPatch : Listener
+public class ItemNetModifier
 {
-    public OnTriggerEnterPatch(string id) : base(id)
-    {
-    }
 
     public static void Prefix(ItemCollector __instance)
     {
         //On Item Picked up, it checks the value stored in the static script of how many the max should be and it sets the private variable to that
         //On Unload it calls a custom method on all of them to reset them.
         int value = (int)Traverse.Create(__instance).Field("maxNumberOfItems").GetValue();
-        if (value != RealisticMod.size)
+        if (value != RealisticMod.ItemCollectorSize)
         {
-            Traverse.Create(__instance).Field("maxNumberOfItems").SetValue(RealisticMod.size);
+            Traverse.Create(__instance).Field("maxNumberOfItems").SetValue(RealisticMod.ItemCollectorSize);
         }
     }
 
     
-}
-
-public class HealCommand : Command
-{
-    public HealCommand(string id) : base(id)
-    {
-    }
-
-    [ConsoleCommand(name: "heal", docs: "This command heals you.")]
-    public static void MyCommand(string[] args)
-    {
-        if (args.Length == 0)
-        {
-            
-        }
-        else if (args.Length == 1)
-        {
-
-        }
-        else
-        {
-            Debug.Log("Please say /heal or /heal [Player]");
-        }
-    }
-
 }
 
 
