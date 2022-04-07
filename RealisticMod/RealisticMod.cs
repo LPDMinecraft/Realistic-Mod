@@ -15,9 +15,9 @@ public class RealisticMod : Mod
     {
         Debug.Log("Mod RealisticMod will load.");
 
-        // Edit maxmium capaticy in item net to 50
-        ChangeValue(20);
-        log("Edited the maxmium capicity of itemnets to 50");
+        // Edit maxmium capaticy in item net to 40
+        ChangeItemNetMaxValue(40);
+        Logger.log("Edited the maxmium capicity of itemnets to 50");
 
         // Listener and Command Manager
         harmony = new Harmony("de.lcraft.raft.realisticmod.listeners");
@@ -31,31 +31,35 @@ public class RealisticMod : Mod
         counter = new RaftCounter();
 
         // Loaded
-        Debug.Log("Mod RealisticMod has been loaded!");
+        Logger.log("Mod RealisticMod has been loaded!");
     }
 
     public void OnModUnload()
     {
         harmony.UnpatchAll();
-        Debug.Log("Mod RealisticMod has been unloaded!");
+        Logger.log("Mod RealisticMod has been unloaded!");
     }
 
-    public void ChangeValue(int result)
+    public void ChangeItemNetMaxValue(int result)
     {
         Traverse.Create(FindObjectOfType<ItemCollector>()).Field("maxNumberOfItems").SetValue(result);
         ItemCollectorSize = result;
     }
 
-    public void log(String c)
+}
+
+public class Logger
+{
+
+    public static void log(String c)
     {
         Debug.Log(c);
     }
 
 }
 
-
 [HarmonyPatch(typeof(Inventory), "AddItem", new Type[] { typeof(string), typeof(int) })]
-public class DropTreeModifierListener
+public class DropTreeModifierListener : Logger
 {
 
     static void Prefix(ref string uniqueItemName, ref int amount)
@@ -69,7 +73,7 @@ public class DropTreeModifierListener
 
 [HarmonyPatch(typeof(ItemCollector))]
 [HarmonyPatch("OnTriggerEnter")]
-public class ItemNetModifier
+public class ItemNetModifier : Logger
 {
 
     public static void Prefix(ItemCollector __instance)
@@ -87,7 +91,7 @@ public class ItemNetModifier
 }
 
 
-public class RecipeManager
+public class RecipeManager : Logger
 {
 
     // Set Recipes
@@ -97,62 +101,78 @@ public class RecipeManager
         SetRecipe(ItemManager.GetItemByName("Clay"), new CostMultiple[] {
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Stone") }, 2),
         }, CraftingCategory.Resources, 1, false);
-        mod.log("Loaded recipe: 2 Stone > 1 Clay");
+        log("Loaded recipe: 2 Stone > 1 Clay");
+
         // 1 Stone > 4 Sand
         SetRecipe(ItemManager.GetItemByName("Sand"), new CostMultiple[] {
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Stone") }, 1),
         }, CraftingCategory.Resources, 4, false);
-        mod.log("Loaded recipe: 1 Stone > 4 Sand");
-        // 1 Clay & 1 Sand > 2 Bricks
+        log("Loaded recipe: 1 Stone > 4 Sand");
+
+        // 1 Clay & 1 Sand > 1 Bricks
         SetRecipe(ItemManager.GetItemByName("Placeable_Brick_Wet"), new CostMultiple[] {
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Sand") }, 1),
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Clay") }, 1),
-        }, CraftingCategory.Resources, 2, false);
-        mod.log("Loaded recipe: 1 Clay & 1 Sand > 2 Bricks");
+        }, CraftingCategory.Resources, 1, false);
+        log("Loaded recipe: 1 Clay & 1 Sand > 1 Bricks");
+
         // 8 Planks & 4 Nail & 8 Rope > 1 Storage Medium
         SetRecipe(ItemManager.GetItemByName("Placeable_Storage_Medium"), new CostMultiple[] {
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Plank") }, 8),
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Nail") }, 4),
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Rope") }, 8),
         }, CraftingCategory.Other, 1, false);
-        mod.log("Loaded recipe: 8 Planks & 4 Nail & 8 Rope > 1 Storage Medium");
+        log("Loaded recipe: 8 Planks & 4 Nail & 8 Rope > 1 Storage Medium");
+
         // 6 Planks & 6 Nail & 12 Rope > 2 Item Net
         SetRecipe(ItemManager.GetItemByName("Placeable_ItemNet"), new CostMultiple[] {
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Plank") }, 6),
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Rope") }, 12),
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Nail") }, 6),
         }, CraftingCategory.Other, 2, false);
-        mod.log("Loaded recipe: 6 Planks & 6 Nail & 12 Rope > 2 Item Net");
+        log("Loaded recipe: 6 Planks & 6 Nail & 12 Rope > 2 Item Net");
+
         // 2 Thatch > 4 Rope
         SetRecipe(ItemManager.GetItemByName("Rope"), new CostMultiple[] {
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Thatch") }, 2),
         }, CraftingCategory.Resources, 4, false);
-        mod.log("Loaded recipe: 2 Thatch > 4 Rope");
-        // 1 Scrap > 4 Nail
+        log("Loaded recipe: 2 Thatch > 4 Rope");
+
+        // 1 Scrap > 6 Nail
         SetRecipe(ItemManager.GetItemByName("Nail"), new CostMultiple[] {
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Scrap") }, 1),
-        }, CraftingCategory.Resources, 4, false);
-        mod.log("Loaded recipe: 1 Scrap > 4 Nail");
+        }, CraftingCategory.Resources, 6, false);
+        log("Loaded recipe: 1 Scrap > 4 Nail");
+
+        // 1 Metalingot > 3 Hinge
+        SetRecipe(ItemManager.GetItemByName("Hinge"), new CostMultiple[] {
+            new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("MetalIngot") }, 1),
+        }, CraftingCategory.Resources, 3, true);
+        log("Loaded recipe: 1 Metalingot > 3 Hinge");
+
         // 1 Scrap & 3 Plank > 2 Lantern Basic
         SetRecipe(ItemManager.GetItemByName("Placeable_Lantern_Basic"), new CostMultiple[] {
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Scrap") }, 1),
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Plank") }, 3),
         }, CraftingCategory.Decorations, 2, false);
-        mod.log("Loaded recipe: 1 Scrap & 3 Plank > 2 Lantern Basic");
+        log("Loaded recipe: 1 Scrap & 3 Plank > 2 Lantern Basic");
+
         // 1 Metal & 4 Plank & 1 Lantern Basic > 1 Lantern Metal
         SetRecipe(ItemManager.GetItemByName("Placeable_Lantern_Metal"), new CostMultiple[] {
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("MetalIngot") }, 1),
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Plank") }, 4),
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Placeable_Lantern_Basic") }, 1),
         }, CraftingCategory.Decorations, 1, false);
-        mod.log("Loaded recipe: 1 Metal & 4 Plank & 1 Lantern Basic > 1 Lantern Metal");
+
+        log("Loaded recipe: 1 Metal & 4 Plank & 1 Lantern Basic > 1 Lantern Metal");
         // 2 Scrap & 4 Plank & 1 Lantern Basic > 1 Lantern Metal
         SetRecipe(ItemManager.GetItemByName("Placeable_Lantern_FireBasket"), new CostMultiple[] {
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Scrap") }, 2),
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Plank") }, 4),
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Placeable_Lantern_Basic") }, 1),
         }, CraftingCategory.Decorations, 2, false);
-        mod.log("Loaded recipe: 2 Scrap & 4 Plank & 1 Lantern Basic > 1 Lantern Metal");
+        log("Loaded recipe: 2 Scrap & 4 Plank & 1 Lantern Basic > 1 Lantern Metal");
+
         // 2 Scrap & 2 Lantern Basic > Lantern Fireplace
         SetRecipe(ItemManager.GetItemByName("Placeable_Lantern_Fireplace"), new CostMultiple[] {
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Scrap") }, 4),
@@ -160,23 +180,27 @@ public class RecipeManager
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Placeable_Lantern_Basic") }, 8),
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Placeable_Lantern_Metal") }, 2),
         }, CraftingCategory.Decorations, 1, false);
-        mod.log("Loaded recipe: 2 Scrap & 2 Lantern Basic > Lantern Fireplace");
+        log("Loaded recipe: 2 Scrap & 2 Lantern Basic > Lantern Fireplace");
+
         // 8 Plank & 1 Lantern Basic > 4 Stone
         SetRecipe(ItemManager.GetItemByName("Stone"), new CostMultiple[] {
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Plank") }, 8),
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Placeable_Lantern_Basic") }, 1),
         }, CraftingCategory.Resources, 4, false);
-        mod.log("Loaded recipe: 8 Plank & 1 Lantern Basic > 4 Stone");
+        log("Loaded recipe: 8 Plank & 1 Lantern Basic > 4 Stone");
+
         // 2 Scrap > 4 Bolt
         SetRecipe(ItemManager.GetItemByName("Bolt"), new CostMultiple[] {
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Scrap") }, 2),
         }, CraftingCategory.Resources, 4, false);
-        mod.log("Loaded recipe: 2 Scrap > 4 Bolt");
+        log("Loaded recipe: 2 Scrap > 4 Bolt");
+
         // 1 MetalIngot > 4 Bolt
         CreateRecipe(ItemManager.GetItemByName("Bolt"), new CostMultiple[] {
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("MetalIngot") }, 1),
         }, CraftingCategory.Resources, 4, false);
-        mod.log("Loaded recipe: 1 MetalIngot > 4 Bolt");
+        log("Loaded recipe: 1 MetalIngot > 4 Bolt");
+
         // 12 Rope & 8 Plank & 1 Fish > 1 SharkBait
         SetRecipe(ItemManager.GetItemByName("SharkBait"), new CostMultiple[] {
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Rope") }, 12),
@@ -188,26 +212,29 @@ public class RecipeManager
                 ItemManager.GetItemByName("Raw_Salmon"),
                 ItemManager.GetItemByName("Raw_Tilapia"), }, 1),
         }, CraftingCategory.Tools, 2, true);
-        mod.log("Loaded recipe: 12 Rope & 8 Plank & 1 Fish > 1 SharkBait");
+        log("Loaded recipe: 12 Rope & 8 Plank & 1 Fish > 1 SharkBait");
+
         // 4 Plank & 1 (Latern Basic || Lantern Metal) > 6 Plank
         SetRecipe(ItemManager.GetItemByName("Plank"), new CostMultiple[] {
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Placeable_Lantern_Basic"), ItemManager.GetItemByName("Placeable_Lantern_Metal") }, 1),
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Plank") }, 4),
         }, CraftingCategory.Resources, 6, false);
-        mod.log("Loaded recipe: 4 Plank & 1 (Latern Basic || Lantern Metal) > 6 Plank");
+        log("Loaded recipe: 4 Plank & 1 (Latern Basic || Lantern Metal) > 6 Plank");
+
         // 4 Rope & 2 Thatch & 1 Plank > 4 Plastic
         SetRecipe(ItemManager.GetItemByName("Plastic"), new CostMultiple[] {
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Rope") }, 4),
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Thatch") }, 2),
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Plank") }, 1),
         }, CraftingCategory.Resources, 4, false);
-        mod.log("Loaded recipe: 4 Rope & 2 Thatch & 1 Plank > 4 Plastic");
-        // 4 Plank & 1 Lantern Basic > 2 Scrap
+        log("Loaded recipe: 4 Rope & 2 Thatch & 1 Plank > 4 Plastic");
+
+        // 4 Plank & 1 (Latern Basic || Lantern Metal) > 2 Scrap
         SetRecipe(ItemManager.GetItemByName("Scrap"), new CostMultiple[] {
-            new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Placeable_Lantern_Basic") }, 1),
+            new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Placeable_Lantern_Basic"), ItemManager.GetItemByName("Placeable_Lantern_Metal") }, 1),
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Plank") }, 4),
         }, CraftingCategory.Resources, 2, false);
-        mod.log("Loaded recipe: 4 Plank & 1 Lantern Basic > 2 Scrap");
+        log("Loaded recipe: 4 Plank & 1 Lantern Basic > 2 Scrap");
     }
 
     public void SetRecipe(Item_Base item, CostMultiple[] cost, CraftingCategory category = CraftingCategory.Resources, int amountToCraft = 1, bool learnedFromBeginning = false)
@@ -235,14 +262,14 @@ public class RecipeManager
     }
 
 }
-public class RaftCounter
+public class RaftCounter : Logger
 {
     public void printItemsCounts(string text, IDictionary<string, int> itemsCounts)
     {
         Debug.Log(text);
         foreach (KeyValuePair<string, int> item in itemsCounts)
         {
-            Debug.Log("- " + item.Key + " : x" + item.Value);
+            log("- " + item.Key + " : x" + item.Value);
         }
     }
 
