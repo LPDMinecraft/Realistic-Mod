@@ -125,7 +125,7 @@ public class RecipeManager : Logger
         log("Loaded recipe: 8 Planks & 4 Nail & 8 Rope > 1 Storage Medium");
 
         // 6 Planks & 6 Nail & 12 Rope > 2 Item Net
-        SetRecipe(ItemManager.GetItemByName("Placeable_ItemNet"), new CostMultiple[] {
+        SetRecipe(ItemManager.GetItemByName("Placeable_CollectionNet_Basic"), new CostMultiple[] {
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Plank") }, 6),
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Rope") }, 12),
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Nail") }, 6),
