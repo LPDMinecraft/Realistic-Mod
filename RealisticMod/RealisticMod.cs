@@ -201,6 +201,12 @@ public class RecipeManager : Logger
         }, CraftingCategory.Resources, 4, false);
         log("Loaded recipe: 1 MetalIngot > 4 Bolt");
 
+        // 4 MetalIngot > 1 TitaniumOre
+        CreateRecipe(ItemManager.GetItemByName("TitaniumOre"), new CostMultiple[] {
+            new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("MetalIngot") }, 4),
+        }, CraftingCategory.Resources, 1, false);
+        log("Loaded recipe: 4 MetalIngot > 1 TitaniumOre");
+
         // 12 Rope & 8 Plank & 1 Fish > 1 SharkBait
         SetRecipe(ItemManager.GetItemByName("SharkBait"), new CostMultiple[] {
             new CostMultiple(new Item_Base[] { ItemManager.GetItemByName("Rope") }, 12),
