@@ -10,5 +10,62 @@
   "requiredByAllPlayers": false,
   "updateUrl": "https://raftmodding.com/api/v1/mods/realistic-mod/version.txt",
   "isModPermanent": false,
-  "excludedFiles": []
+  "excludedFiles": [],
+  "modSettings": [
+    {
+      "type": "text",
+      "name": "treeDropModifierDisplay",
+      "text": "Tree Drop Modifier"
+    },
+    {
+      "type": "checkbox",
+      "name": "treeDropEnable",
+      "text": "Enabled",
+      "access": "both",
+      "default": true
+    },
+    {
+      "type": "slider",
+      "name": "treeDropMultiplier",
+      "text": "Multiplier",
+      "access": "mainmenu",
+      "default": 2,
+      "range": {
+        "type": "percent",
+        "min": 0.25,
+        "max": 5,
+        "decimals": 1
+      }
+    },
+    {
+      "type": "text",
+      "name": "none1",
+      "text": ""
+    },
+    {
+      "type": "text",
+      "name": "itemNetAmountDisplay",
+      "text": "ItemNet Max Amount"
+    },
+    {
+      "type": "checkbox",
+      "name": "itemNetAmountEnable",
+      "text": "Enabled",
+      "access": "both",
+      "default": true
+    },
+    {
+      "type": "slider",
+      "name": "itemNetAmountMax",
+      "text": "Amount",
+      "access": "mainmenu",
+      "default": 20,
+      "range": {
+        "type": "number",
+        "min": 10,
+        "max": 100,
+        "decimals": 0
+      }
+    }
+  ]
 }

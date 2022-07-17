@@ -9,23 +9,30 @@ public class RealisticMod : Mod
     private RecipeManager recipeManager;
     private RaftCounter counter;
     private Harmony harmony;
-    public static int ItemCollectorSize;
+
+    static bool ExtraSettingsAPI_Loaded = false;
+    public static int currentItemNetMaxValue = 0;
 
     public void Start()
     {
-        Debug.Log("Mod RealisticMod will load.");
+        Logger.log("Mod RealisticMod will load.");
 
-        // Edit maxmium capaticy in item net to 40
-        ChangeItemNetMaxValue(40);
-        Logger.log("Edited the maxmium capicity of itemnets to 50");
+        // Recipe Manager
+        Logger.log("");
+        Logger.log("Loading Recipes");
+        recipeManager = new RecipeManager();
+        recipeManager.registerAllRecipes(this);
+        Logger.log("");
+
+        // Load Extra Settings API
+        Logger.log("Loading Extra Settings API");
+
+        // Edit maxmium capaticy of itemnets
+        
 
         // Listener and Command Manager
         harmony = new Harmony("de.lcraft.raft.realisticmod.listeners");
         harmony.PatchAll();
-
-        // Recipe Manager
-        recipeManager = new RecipeManager();
-        recipeManager.registerAllRecipes(this);
 
         // Raft Counter
         counter = new RaftCounter();
@@ -34,17 +41,89 @@ public class RealisticMod : Mod
         Logger.log("Mod RealisticMod has been loaded!");
     }
 
+    public void Update()
+    {
+        if (ExtraSettingsAPI_Loaded)
+        {
+            ChangeItemNetMaxValue(getItemNetMaxValue());
+        }
+    }
+
     public void OnModUnload()
     {
-        harmony.UnpatchAll();
+        Logger.log("");
+
+        // Listener and Command Manager
+        harmony.UnpatchAll("de.lcraft.raft.realisticmod.listeners");
+
         Logger.log("Mod RealisticMod has been unloaded!");
     }
 
-    public void ChangeItemNetMaxValue(int result)
+
+
+    public static void ChangeItemNetMaxValue(int result)
     {
-        Traverse.Create(FindObjectOfType<ItemCollector>()).Field("maxNumberOfItems").SetValue(result);
-        ItemCollectorSize = result;
+        if (!isItemNetMaxValueEnabled())
+        {
+            result = 20;
+            if(currentItemNetMaxValue != result)
+            {
+                Traverse.Create(FindObjectOfType<ItemCollector>()).Field("maxNumberOfItems").SetValue(result);
+                Logger.log("Reseted the maxmium capicity of itemnets");
+            }
+        } else if(currentItemNetMaxValue != result)
+        {
+            Traverse.Create(FindObjectOfType<ItemCollector>()).Field("maxNumberOfItems").SetValue(result);
+            Logger.log("Edited the maxmium capicity of itemnets to " + result);
+        }
+        currentItemNetMaxValue = result;
     }
+    public static int getItemNetMaxValue()
+    {
+        return int.Parse(ExtraSettingsAPI_GetSliderValue("itemNetAmountMax").ToString());
+    }
+    public static Boolean isItemNetMaxValueEnabled()
+    {
+        return ExtraSettingsAPI_GetCheckboxState("itemNetAmountEnable");
+    }
+
+
+
+    // Extra Settings API
+
+    public void ExtraSettingsAPI_Load() // Occurs when the API loads the mod's settings
+    {
+        Logger.log("Test1");
+    }
+
+    public void ExtraSettingsAPI_Unload() // Occurs when the API unloads
+    {
+        Logger.log("Test2");
+    }
+
+    public void ExtraSettingsAPI_SettingsOpen() // Occurs when user opens the settings menu
+    {
+        Logger.log("Test3");
+    }
+
+    public void ExtraSettingsAPI_SettingsClose() // Occurs when user closes the settings menu
+    {
+        Logger.log("Test4");
+    }
+
+    public void ExtraSettingsAPI_SettingsCreate() // Occurs when API creates the controls for the settings of this mod. This event still occurs but is now obsolete, use the SettingsOpen event instead
+    {
+        Logger.log("Test5");
+    }
+
+    public void ExtraSettingsAPI_ButtonPress(string name) // Occurs when a settings button is clicked. "name" is set the the button's name
+    {
+        if (name == "buttonDisplay")
+            Debug.Log("I've been clicked");
+    }
+
+    public static bool ExtraSettingsAPI_GetCheckboxState(string SettingName) => false;
+    public static float ExtraSettingsAPI_GetSliderValue(string SettingName) => 0;
 
 }
 
@@ -53,7 +132,13 @@ public class Logger
 
     public static void log(String c)
     {
-        Debug.Log(c);
+        if(!c.Equals("") && !c.Equals(" "))
+        {
+            Debug.Log("[RealisticMod] " + c);
+        } else
+        {
+            Debug.Log(c);
+        }
     }
 
 }
@@ -81,9 +166,11 @@ public class ItemNetModifier : Logger
         //On Item Picked up, it checks the value stored in the static script of how many the max should be and it sets the private variable to that
         //On Unload it calls a custom method on all of them to reset them.
         int value = (int)Traverse.Create(__instance).Field("maxNumberOfItems").GetValue();
-        if (value != RealisticMod.ItemCollectorSize)
+        RealisticMod.currentItemNetMaxValue = value;
+        if (value != RealisticMod.getItemNetMaxValue() && RealisticMod.isItemNetMaxValueEnabled())
         {
-            Traverse.Create(__instance).Field("maxNumberOfItems").SetValue(RealisticMod.ItemCollectorSize);
+            Traverse.Create(__instance).Field("maxNumberOfItems").SetValue(RealisticMod.getItemNetMaxValue());
+            RealisticMod.currentItemNetMaxValue = RealisticMod.getItemNetMaxValue();
         }
     }
 
